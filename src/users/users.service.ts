@@ -8,6 +8,7 @@ import { SignupResponseDto } from './dto/signup-response.dto';
 import { SignupDto } from './dto/signup.dto';
 import { UserStatus } from './domain/user-status.enum';
 import { EmailService } from './email.service';
+import { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
 import { PasswordHasherService } from './password-hasher.service';
 import { UsersRepository } from './users.repository';
 
@@ -76,6 +77,54 @@ export class UsersService {
     await this.usersRepository.activateUser(user.id);
     await this.usersRepository.markEmailVerificationTokenConsumed(
       verificationToken.id,
+    );
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.usersRepository.findByEmail(email);
+    // Do not leak account existence.
+    if (!user) {
+      return;
+    }
+
+    const rawResetToken = randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(rawResetToken);
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 minutes
+    await this.usersRepository.createPasswordResetToken({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    });
+
+    const appBaseUrl = process.env.APP_BASE_URL ?? 'http://localhost:3002';
+    const resetUrl = `${appBaseUrl}/reset-password?token=${rawResetToken}`;
+    this.emailService.sendPasswordResetEmail(user.email, resetUrl);
+  }
+
+  async confirmPasswordReset(
+    passwordResetConfirmDto: PasswordResetConfirmDto,
+  ): Promise<void> {
+    const tokenHash = this.hashToken(passwordResetConfirmDto.token);
+    const passwordResetToken =
+      await this.usersRepository.findValidPasswordResetToken(tokenHash);
+
+    if (!passwordResetToken) {
+      throw new BadRequestException(
+        'Password reset token is invalid or expired.',
+      );
+    }
+
+    const user = await this.usersRepository.findById(passwordResetToken.userId);
+    if (!user) {
+      throw new BadRequestException('Password reset target user not found.');
+    }
+
+    const passwordHash = this.passwordHasher.hash(
+      passwordResetConfirmDto.newPassword,
+    );
+    await this.usersRepository.updatePasswordHash(user.id, passwordHash);
+    await this.usersRepository.markPasswordResetTokenConsumed(
+      passwordResetToken.id,
     );
   }
 

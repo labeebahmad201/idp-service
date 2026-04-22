@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmailService } from './email.service';
 import { EmailVerificationTokenEntity } from './entities/email-verification-token.entity';
+import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 import { UserEntity } from './entities/user.entity';
 import { PasswordHasherService } from './password-hasher.service';
 import { UsersController } from './users.controller';
@@ -10,7 +11,11 @@ import { UsersService } from './users.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, EmailVerificationTokenEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      EmailVerificationTokenEntity,
+      PasswordResetTokenEntity,
+    ]),
   ],
   controllers: [UsersController],
   providers: [

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { UserStatus } from './domain/user-status.enum';
 import { EmailVerificationTokenEntity } from './entities/email-verification-token.entity';
+import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 import { UserEntity } from './entities/user.entity';
 
 type CreateUserInput = {
@@ -19,6 +20,8 @@ export class UsersRepository {
     private readonly usersRepository: Repository<UserEntity>,
     @InjectRepository(EmailVerificationTokenEntity)
     private readonly emailVerificationTokenRepository: Repository<EmailVerificationTokenEntity>,
+    @InjectRepository(PasswordResetTokenEntity)
+    private readonly passwordResetTokenRepository: Repository<PasswordResetTokenEntity>,
   ) {}
 
   findByEmail(email: string): Promise<UserEntity | null> {
@@ -80,6 +83,48 @@ export class UsersRepository {
   async activateUser(userId: string): Promise<void> {
     await this.usersRepository.update(userId, {
       status: UserStatus.Active,
+    });
+  }
+
+  createPasswordResetToken(input: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }): Promise<PasswordResetTokenEntity> {
+    const token = this.passwordResetTokenRepository.create({
+      userId: input.userId,
+      tokenHash: input.tokenHash,
+      expiresAt: input.expiresAt,
+      consumedAt: null,
+    });
+
+    return this.passwordResetTokenRepository.save(token);
+  }
+
+  findValidPasswordResetToken(
+    tokenHash: string,
+  ): Promise<PasswordResetTokenEntity | null> {
+    return this.passwordResetTokenRepository.findOne({
+      where: {
+        tokenHash,
+        consumedAt: IsNull(),
+        expiresAt: MoreThan(new Date()),
+      },
+    });
+  }
+
+  async markPasswordResetTokenConsumed(tokenId: string): Promise<void> {
+    await this.passwordResetTokenRepository.update(tokenId, {
+      consumedAt: new Date(),
+    });
+  }
+
+  async updatePasswordHash(
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
+    await this.usersRepository.update(userId, {
+      passwordHash,
     });
   }
 }

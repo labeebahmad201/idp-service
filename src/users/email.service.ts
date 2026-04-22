@@ -10,4 +10,11 @@ export class EmailService {
       `Verification email queued for ${email}. Link: ${verificationUrl}`,
     );
   }
+
+  sendPasswordResetEmail(email: string, resetUrl: string): void {
+    // Email provider integration (SES/SendGrid/etc.) will replace this.
+    this.logger.log(
+      `Password reset email queued for ${email}. Link: ${resetUrl}`,
+    );
+  }
 }

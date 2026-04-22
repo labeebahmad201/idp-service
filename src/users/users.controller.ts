@@ -12,11 +12,14 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
+import { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import { SignupResponseDto } from './dto/signup-response.dto';
 import { SignupDto } from './dto/signup.dto';
 import { UsersService } from './users.service';
@@ -67,5 +70,37 @@ export class UsersController {
 
     await this.usersService.verifyEmail(token);
     return { message: 'Email verified successfully.' };
+  }
+
+  @ApiOperation({
+    summary: 'Request a password reset email.',
+  })
+  @ApiNoContentResponse({
+    description:
+      'Request accepted. Response is the same whether account exists or not.',
+  })
+  @Post('password-reset/request')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async requestPasswordReset(
+    @Body() passwordResetRequestDto: PasswordResetRequestDto,
+  ): Promise<void> {
+    await this.usersService.requestPasswordReset(passwordResetRequestDto.email);
+  }
+
+  @ApiOperation({
+    summary: 'Confirm password reset with token and new password.',
+  })
+  @ApiNoContentResponse({
+    description: 'Password reset succeeded.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Reset token is invalid or expired.',
+  })
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async confirmPasswordReset(
+    @Body() passwordResetConfirmDto: PasswordResetConfirmDto,
+  ): Promise<void> {
+    await this.usersService.confirmPasswordReset(passwordResetConfirmDto);
   }
 }

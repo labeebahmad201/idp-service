@@ -52,6 +52,12 @@ npm run start:prod
 - Service generates a verification token, stores a hashed token with expiry, and logs a verification link.
 - `GET /v1/email-verification?token=...` validates token, marks user `active`, and consumes token.
 
+## Password reset flow (current)
+
+- `POST /v1/password-reset/request` accepts email and always returns `204` (no account enumeration).
+- Service generates reset token, stores hashed token + expiry, and logs reset link.
+- `POST /v1/password-reset/confirm` validates token and updates password hash.
+
 ## Test
 
 ```bash
