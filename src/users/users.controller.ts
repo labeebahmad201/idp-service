@@ -1,8 +1,20 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { SignupResponseDto } from './dto/signup-response.dto';
@@ -28,5 +40,32 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   signup(@Body() signupDto: SignupDto): Promise<SignupResponseDto> {
     return this.usersService.signup(signupDto);
+  }
+
+  @ApiOperation({
+    summary: 'Verify email with a token sent during signup.',
+  })
+  @ApiQuery({
+    name: 'token',
+    required: true,
+    description: 'Raw email verification token.',
+  })
+  @ApiOkResponse({
+    description: 'Email is verified successfully.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Verification token is missing, invalid, or expired.',
+  })
+  @Get('email-verification')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Query('token') token?: string,
+  ): Promise<{ message: string }> {
+    if (!token) {
+      throw new BadRequestException('Verification token is required.');
+    }
+
+    await this.usersService.verifyEmail(token);
+    return { message: 'Email verified successfully.' };
   }
 }

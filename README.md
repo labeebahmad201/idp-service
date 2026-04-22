@@ -46,6 +46,12 @@ npm run start:prod
 - Swagger UI: `http://localhost:3000/docs`
 - OpenAPI JSON: `http://localhost:3000/docs-json`
 
+## Email verification flow (current)
+
+- `POST /v1/signup` creates a user in `pending_verification`.
+- Service generates a verification token, stores a hashed token with expiry, and logs a verification link.
+- `GET /v1/email-verification?token=...` validates token, marks user `active`, and consumes token.
+
 ## Test
 
 ```bash
