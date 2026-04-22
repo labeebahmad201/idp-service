@@ -18,6 +18,7 @@ Planned next scope:
 
 - Node.js 20+
 - npm 10+
+- PostgreSQL 14+
 
 ## Install
 
@@ -28,12 +29,22 @@ npm install
 ## Run
 
 ```bash
+# copy env defaults and adjust as needed
+cp .env.example .env
+# DB_SYNC defaults to false (recommended)
+# set DB_SYNC=true only for local schema auto-sync during development
+
 # development
 npm run start:dev
 
 # production mode
 npm run start:prod
 ```
+
+## API docs
+
+- Swagger UI: `http://localhost:3000/docs`
+- OpenAPI JSON: `http://localhost:3000/docs-json`
 
 ## Test
 

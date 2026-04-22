@@ -16,11 +16,8 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  it('/docs-json (GET)', () => {
+    return request(app.getHttpServer()).get('/docs-json').expect(200);
   });
 
   afterEach(async () => {
